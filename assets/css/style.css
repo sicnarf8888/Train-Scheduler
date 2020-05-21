@@ -1,0 +1,17 @@
+  
+label {
+	font-weight: bold;
+}
+
+.table-header{
+	font-weight: bold;
+}
+
+.trash-can {
+	width:  25px;
+	height: 25px;
+}
+
+.form-validation {
+	color: red;
+}
