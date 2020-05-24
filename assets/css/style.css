@@ -15,3 +15,8 @@ label {
 .form-validation {
 	color: red;
 }
+
+.site-header {
+	background: url('https://i.gifer.com/2iiH.gif');
+	background-size: contain;
+}

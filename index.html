@@ -1,168 +1,329 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Train Scheduler</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Train Scheduler</title>
 
-	<!--Bootstrap CDN link-->
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <!--Bootstrap CDN link-->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+      integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+      crossorigin="anonymous"
+    />
 
-	<!--Bootswatch link-->
-	<link rel="stylesheet" type="text/css" href="https://bootswatch.com/4/spacelab/bootstrap.min.css">
+    <!--Bootswatch link-->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://bootswatch.com/4/spacelab/bootstrap.min.css"
+    />
 
-	<!--Reset css file-->
-	<!--<link rel="stylesheet" type="text/css" href="assets/css/reset.css">-->
+    <!--Google Fonts-->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto"
+      rel="stylesheet"
+    />
 
-	<!--Google Fonts-->
-	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <!--External css file-->
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css" />
+  </head>
+  <body class="bg-secondary">
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col">
+          <div class="card mb-4 site-header border bg-primary">
+            <div class="card-body text-white pt-5">
+              <h1 class="card-title text-center display-3 font-weight-bold">
+                Planet Express
+              </h1>
+              <!--Display current/running time here using moment Js-->
+              <h5 class="float-right mt-4">
+                Current time: <span id="current-time"></span>
+              </h5>
+              <!--<button type="button" class="text-center btn btn-lg signIn">Sign in with Google</button>-->
+            </div>
+          </div>
+        </div>
+      </div>
 
-	<!--External css file-->
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css">
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="card border">
+            <div class="card-header bg-primary text-white">
+              <h5>
+                &#x1F551; Current train schedule
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="text-nowrap">
+                        Train name
+                        <i
+                          class="fa fa-question-circle"
+                          aria-hidden="true"
+                          data-toggle="tooltip"
+                          data-placement="top"
+                          title="The name of the train."
+                        ></i>
+                      </th>
+                      <th scope="col" class="text-nowrap">
+                        Destination
+                        <i
+                          class="fa fa-question-circle"
+                          aria-hidden="true"
+                          data-toggle="tooltip"
+                          data-placement="top"
+                          title="The location to where the train is traveling to. For example, Chicago, IL."
+                        ></i>
+                      </th>
+                      <th scope="col" class="text-nowrap">
+                        Frequency (min)
+                        <i
+                          class="fa fa-question-circle"
+                          aria-hidden="true"
+                          data-toggle="tooltip"
+                          data-placement="top"
+                          title="How often (in minutes) the train leaves."
+                        ></i>
+                      </th>
+                      <th scope="col" class="text-nowrap">
+                        Next arrival
+                        <i
+                          class="fa fa-question-circle"
+                          aria-hidden="true"
+                          data-toggle="tooltip"
+                          data-placement="top"
+                          title="The time the next train will arrive at the destination."
+                        ></i>
+                      </th>
+                      <th scope="col" class="text-nowrap">
+                        Minutes away
+                        <i
+                          class="fa fa-question-circle"
+                          aria-hidden="true"
+                          data-toggle="tooltip"
+                          data-placement="top"
+                          title="The number of minutes until the next train is expected to arrive at the destination."
+                        ></i>
+					  </th>
+					  <th scope="col" class="text-nowrap">
+                        Remove
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="schedule-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border">
+            <div class="card-header bg-primary text-white">
+              <!-- <img src="assets/images/add.png" alt="train" />  -->
+              <h5>&#128646; Add train</h5>
+            </div>
+            <div class="card-body">
+              <form>
+                <div class="form-group">
+                  <label for="trainName"
+                    >Train name
+                    <i
+                      class="fa fa-question-circle"
+                      aria-hidden="true"
+                      data-toggle="tooltip"
+                      data-placement="top"
+                      title="The name of the train you want to add to the schedule. For example, Milwaukee Railroad."
+                    ></i
+                  ></label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="train-name"
+                    placeholder="Mars Express"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="destination"
+                    >Destination
+                    <i
+                      class="fa fa-question-circle"
+                      aria-hidden="true"
+                      data-toggle="tooltip"
+                      data-placement="top"
+                      title="The location to where the train is traveling to. For example, Chicago, IL."
+                    ></i
+                  ></label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="destination"
+                    placeholder="San Diego, CA"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="firstTrainTime"
+                    >First train time (HH:mm - military time)
+                    <i
+                      class="fa fa-question-circle"
+                      aria-hidden="true"
+                      data-toggle="tooltip"
+                      data-placement="top"
+                      title="Enter the first time that the train leaves (specify in military time)."
+                    ></i
+                  ></label>
+                  <small id="not-military-time" class="form-validation"></small>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="first-train-time"
+                    placeholder="HH:mm"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="firstTrainTime"
+                    >Frequency (min)
+                    <i
+                      class="fa fa-question-circle"
+                      aria-hidden="true"
+                      data-toggle="tooltip"
+                      data-placement="top"
+                      title="How often (in minutes) the train leaves."
+                    ></i
+                  ></label>
+                  <small id="not-a-number" class="form-validation"></small>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="frequency"
+                  />
+                </div>
+                <p id="missing-field" class="form-validation"></p>
+                <button
+                  type="submit"
+                  class="btn btn-primary rounded"
+                  id="submit-button"
+                  data-toggle="modal"
+                >
+                  Add to schedule
+                </button>
 
-	<!--JQuery link-->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+                <!--Confirmation modal. Appears when train is successfully added to the current schedule.-->
+                <div class="modal" id="addTrain" tabindex="-1" role="dialog">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header bg-primary">
+                        <h5 class="modal-title text-white">
+                          Train successfully added
+                        </h5>
+                        <button
+                          type="button"
+                          class="close"
+                          data-dismiss="modal"
+                          aria-label="Close"
+                        >
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="add-train-modal ml-3 mt-3"></div>
+                      <div class="modal-footer">
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-dismiss="modal"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
 
-	<!--Font Awesome link-->
-	<script src="https://use.fontawesome.com/abd289e58f.js"></script>
+              <!--Confirmation modal. Appears when user wants to remove a train from the schedule-->
+              <div class="modal" id="removeTrain" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header bg-primary">
+                      <h5 class="modal-title text-white">
+                        Are you sure you want to remove this train?
+                      </h5>
+                      <button
+                        type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close"
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="remove-train-modal ml-3 mt-3"></div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal"
+                        id="remove-train-btn"
+                      >
+                        Remove
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <!-- Popper JS -->
+  <script
+    type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+  ></script>
+  <!--JQuery link-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-	<!--Firebase Javascript link-->
-  <script src="https://www.gstatic.com/firebasejs/7.14.4/firebase-app.js"></script>
+  <!--Font Awesome link-->
+  <script src="https://use.fontawesome.com/abd289e58f.js"></script>
 
-	<!--Add Moment JS-->
-	<script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+  <!--Add Moment JS-->
+  <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
 
-	<!--Bootstrap Javascript links (required for modals to work)-->
-	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+  <!--Bootstrap Javascript links (required for modals to work)-->
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js"
+    integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4"
+    crossorigin="anonymous"
+  ></script>
 
-	<!--Firebase UI JS and CSS for authentication-->
-	<script src="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.js"></script>
-	<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.css" />
+  <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+  <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-database.js"></script>
 
-</head>
-<body class="bg-secondary">
-
-	<div class="container">
-		<div class="row">
-			<div class="col-md-12">
-				<div class="card mb-4 bg-primary border border-primary">
-					<div class="card-body text-white">
-				    	<h1 class="card-title text-center"><img src="assets/images/Solar system.webp" alt="train">Planet Express</h1>
-				    	<h5 class="card-text"></h5>
-				    	<!--<button type="button" class="text-center btn btn-lg signIn">Sign in with Google</button>-->
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="row mb-4 content">
-			<div class="col-md-12">
-				<div class="card border border-primary">
-					<div class="card-header bg-primary text-white">
-						<h5><img src="assets/images/clock.png" alt="clock"> Current train schedule</h5>
-					</div>
-					<div class="card-body">
-							<!--Display current/running time here using moment Js-->
-							<h5>Current time: <span id="current-time"></span></h5>
-							<table class="table table-hover table-responsive-md">
-							  <thead>
-							    <tr>
-									<th scope="col"></th>
-							    	<th scope="col">Train name <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The name of the train."></i></th>
-							    	<th scope="col">Destination <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The location to where the train is traveling to. For example, Chicago, IL."></i></th>
-							    	<th scope="col">Frequency (min) <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="How often (in minutes) the train leaves."></i></th>
-							    	<th scope="col">Next arrival <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The time the next train will arrive at the destination."></i></th>
-							    	<th scope="col">Minutes away <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The number of minutes until the next train is expected to arrive at the destination."></i></th>
-							    </tr>
-							  </thead>
-							  <tbody id="schedule-body">
-							  </tbody>
-							</table>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="row content">
-			<div class="col-md-12">
-				<div class="card border border-primary">
-					<div class="card-header bg-primary text-white">
-						<h5><img src="assets/images/add.png" alt="train"> Add train</h5>
-					</div>
-					<div class="card-body">
-						<form>
-							<div class="form-group">
-						    	<label for="trainName">Train name <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The name of the train you want to add to the schedule. For example, Milwaukee Railroad."></i></label>
-						    	<input type="text" class="form-control" id="train-name" placeholder="Mars Express">
-						  	</div>
-						  	<div class="form-group">
-						    	<label for="destination">Destination <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="The location to where the train is traveling to. For example, Chicago, IL."></i></label>
-						    	<input type="text" class="form-control" id="destination" placeholder="San Diego, CA">
-						  	</div>
-						  	<div class="form-group">
-						    	<label for="firstTrainTime">First train time (HH:mm - military time) <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Enter the first time that the train leaves (specify in military time)."></i></label>
-						    	<small id="not-military-time" class="form-validation"></small>
-						    	<input type="text" class="form-control" id="first-train-time" placeholder="HH:mm">
-						  	</div>
-						  	<div class="form-group">
-						    	<label for="firstTrainTime">Frequency (min) <i class="fa fa-question-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="How often (in minutes) the train leaves."></i></label>
-						    	<small id="not-a-number" class="form-validation"></small>
-						    	<input type="text" class="form-control" id="frequency" placeholder="">
-						  	</div>
-						  	<p id="missing-field" class="form-validation"></p>
-						  	<button type="submit" class="btn btn-primary rounded" id="submit-button" data-toggle="modal">Add to schedule</button>
-
-						  	<!--Confirmation modal. Appears when train is successfully added to the current schedule.-->
-						  	<div class="modal" id="addTrain" tabindex="-1" role="dialog">
-							  <div class="modal-dialog" role="document">
-							    <div class="modal-content">
-							      <div class="modal-header bg-primary">
-							        <h5 class="modal-title text-white">Train successfully added</h5>
-							        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							        	<span aria-hidden="true">&times;</span>
-							        </button>
-							      </div>
-							      <div class="add-train-modal ml-3 mt-3">
-							      </div>
-							      <div class="modal-footer">
-							        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-							      </div>
-							    </div>
-							  </div>
-							</div>
-						</form>
-
-						<!--Confirmation modal. Appears when user wants to remove a train from the schedule-->
-					  	<div class="modal" id="removeTrain" tabindex="-1" role="dialog">
-						  <div class="modal-dialog" role="document">
-						    <div class="modal-content">
-						      <div class="modal-header bg-primary">
-						        <h5 class="modal-title text-white">Are you sure you want to remove this train?</h5>
-						        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-						        	<span aria-hidden="true">&times;</span>
-						        </button>
-						      </div>
-						      <div class="remove-train-modal ml-3 mt-3">
-						      </div>
-						      <div class="modal-footer">
-						      	<button type="button" class="btn btn-secondary" data-dismiss="modal" id="remove-train-btn">Remove</button>
-						        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-						      </div>
-						    </div>
-						  </div>
-						</div>
-		
-					</div>
-				</div>
-			</div>
-
-
-		</div>
-	</div>
-
-<!--Link to my javascript file-->
-<script src="assets/javascript/logic2.js"></script>
-
-</body>
+  <!--Link to my javascript file-->
+  <script src="assets/javascript/app.js"></script>
 </html>

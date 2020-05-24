@@ -1,244 +1,224 @@
-//Initialize Firebase database
-// Initialize Firebase
-var config = {
+
+// ----------------- INITIALIZATIONS AND GLOBAL VARIABLE DECLARATIONS ---------------------
+
+const FIREBASECONFIG = {
+
 	apiKey: "AIzaSyCXWHtAs_s0jvXrRVLALRaJrBVBE74T2Qo",
-    authDomain: "train-scheduler-3be3a.firebaseapp.com",
-    databaseURL: "https://train-scheduler-3be3a.firebaseio.com",
-    projectId: "train-scheduler-3be3a",
-    storageBucket: "train-scheduler-3be3a.appspot.com",
-    messagingSenderId: "852035740313",
-    appId: "1:852035740313:web:bc9d8461fba0e205754e08",
-    measurementId: "G-RL7R4SQ96G"
- };
- firebase.initializeApp(config);
+	authDomain: "train-scheduler-3be3a.firebaseapp.com",
+	databaseURL: "https://train-scheduler-3be3a.firebaseio.com",
+	projectId: "train-scheduler-3be3a",
+	storageBucket: "train-scheduler-3be3a.appspot.com",
+	messagingSenderId: "852035740313",
+	appId: "1:852035740313:web:bc9d8461fba0e205754e08",
+	
+};
 
- //Create database variable to create reference to firebase.database().
- var database = firebase.database();
+// Initialize APP to use firebase
 
- var tMinutesTillTrain = 0;
+firebase.initializeApp(FIREBASECONFIG);
 
-//Show and update current time. Use setInterval method to update time.
-function displayRealTime() {
-setInterval(function(){
-    $('#current-time').html(moment().format('hh:mm A'))
-  }, 1000);
+
+const database = firebase.database().ref("train");
+const schedule = database.child("schedules");
+
+const tMinutesTillTrain = 0;
+
+// ---------------------- FUNCTIONS ----------------------
+
+
+// Updates time every 60 seconds
+function setCurrentTime() {
+  $("#current-time").html(moment().format("hh:mm:ss A"));
 }
-displayRealTime();
 
+// Run once so that when page loads, time will be displayed immediately
+setCurrentTime();
 
- var tRow = "";
- var getKey = "";
+// Run again, this time with interval every 1 second
+setInterval(function(){
+  setCurrentTime();
+}, 1000);
 
- //Click event for the submit button. When user clicks Submit button to add a train to the schedule...
- $("#submit-button").on("click", function() {
+//Click event for the submit button. When user clicks Submit button to add a train to the schedule...
+$("#submit-button").on("click", function () {
+  // Prevent form from submitting
+  event.preventDefault();
 
-	// Prevent form from submitting
-	event.preventDefault();
+  // Reset all errors before continue
+  resetErrors();
 
-	//Grab the values that the user enters in the text boxes in the "Add train" section. Store the values in variables.
-	var trainName = $("#train-name").val().trim();
-	var destination = $("#destination").val().trim();
-	var firstTrainTime = $("#first-train-time").val().trim();
-	var trainFrequency = $("#frequency").val().trim();
+  //Grab the values that the user enters in the text boxes in the "Add train" section. Store the values in variables.
+  const trainName = $("#train-name").val().trim();
+  const destination = $("#destination").val().trim();
+  const firstTrainTime = $("#first-train-time").val().trim();
+  const trainFrequency = $("#frequency").val().trim();
 
-	//Print the values that the user enters in the text boxes to the console for debugging purposes.
-	console.log(trainName);
-	console.log(destination);
-	console.log(firstTrainTime);
-	console.log(trainFrequency);
+  //Form validation for user input values. To add a train, all fields are required.
+  //Check that all fields are filled out.
 
-	//Form validation for user input values. To add a train, all fields are required.
-	//Check that all fields are filled out.
-	if (trainName === "" || destination === "" || firstTrainTime === "" || trainFrequency === ""){
-		$("#not-military-time").empty();
-		$("#missing-field").html("ALL fields are required to add a train to the schedule.");
-		return false;		
-	}
+  // By using ARRAYS, we can simply check for errors that are common to all the variables such as validating empty values
+  // '.includes' will check for a value inside an array, if not found, will return FALSE.
 
-	//Check to make sure that there are no null values in the form.
-	else if (trainName === null || destination === null || firstTrainTime === null || trainFrequency === null){
-		$("#not-military-time").empty();
-		$("#not-a-number").empty();
-		$("#missing-field").html("ALL fields are required to add a train to the schedule.");
-		return false;		
-	}
+  let hasError = [
+    trainName,
+    destination,
+    firstTrainTime,
+    trainFrequency,
+  ].includes("");
 
-	//Check that the user enters the first train time as military time.
-	else if (firstTrainTime.length !== 5 || firstTrainTime.substring(2,3)!== ":") {
-		$("#missing-field").empty();
-		$("#not-a-number").empty();
-		$("#not-military-time").html("Time must be in military format: HH:mm. For example, 15:00.");
-		return false;
-	}
+  // "if(hasError)" means if the value of "hasError" is true
+  if (hasError) {
+    $("#missing-field").html(
+      "ALL fields are required to add a train to the schedule."
+    );
 
-	//Check that the user enters a number for the Frequency value.
-	else if (isNaN(trainFrequency)) {
-    	$("#missing-field").empty();
-    	$("#not-military-time").empty();
-    	$("#not-a-number").html("Not a number. Enter a number (in minutes).");
-    	return false;
-	}
+    // "return;" means returning a NULL value
+    // We return a null value so that it won't continue pass this "If statement"
+    return;
+  }
 
-	//If form is valid, perform time calculations and add train to the current schedule.
-	else {
-		$("#not-military-time").empty();
-		$("#missing-field").empty();
-		$("#not-a-number").empty();
+	// Use MOMENT.JS to validate 24Hour format
+	
+  if (!moment(firstTrainTime, "HH:mm", true).isValid()) {
+    $("#not-military-time").html(
+      "Time must be in military format: HH:mm. For example, 15:00."
+    );
 
-		//Moment JS math caclulations to determine train next arrival time and the number of minutes away from destination.
-		// First Time (pushed back 1 year to make sure it comes before current time)
-	    var firstTimeConverted = moment(firstTrainTime, "hh:mm").subtract(1, "years");
-	    console.log(firstTimeConverted);
+    // NOTE: We didn't return null here since we wanted all the errors on the fields to appear
+    // making the users know what fields should be corrected.
+    hasError = true;
+  }
 
-	    // Current Time
-	    var currentTime = moment();
-	    console.log("CURRENT TIME: " + moment(currentTime).format("hh:mm"));
+  // Check if the trainFrequency is not a number
 
-	    // Difference between the times
-	    var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
-	    console.log("DIFFERENCE IN TIME: " + diffTime);
+  if (isNaN(trainFrequency)) {
+    $("#not-a-number").html("Not a number. Enter a number (in minutes).");
 
-	    // Time apart (remainder)
-	    var tRemainder = diffTime % trainFrequency;
-	    console.log(tRemainder);
+    
+    // making the users know what fields should be corrected.
+    hasError = true;
+  }
 
-	    // Minute Until Train
-	    var tMinutesTillTrain = trainFrequency - tRemainder;
-	    console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+  // If "hasError" is True, we won't let the code continue to the next line
+ 
+  if (hasError) {
+    return;
+  }
 
-	    // Next Train
-	    var nextTrain = moment().add(tMinutesTillTrain, "minutes").format("hh:mm A");
-	    console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
+  //Moment JS math caculations to determine train next arrival time and the number of minutes away from destination.
+  // First Time (pushed back 1 year to make sure it comes before current time)
+  const firstTimeConverted = moment(firstTrainTime, "HH:mm").subtract(
+    1,
+    "years"
+  );
 
-		//Create local temporary object for holding train data
-		var newTrain = {
-			trainName: trainName,
-			destination: destination,
-			firstTrainTime: firstTrainTime,
-			trainFrequency: trainFrequency,
-			nextTrain: nextTrain,
-			tMinutesTillTrain: tMinutesTillTrain,
-			currentTime: currentTime.format("hh:mm A")
-		};
+  // Difference between the times
 
-		//Save/upload train data to the database.
-		database.ref().push(newTrain);
+  const diffTime = moment().diff(moment(firstTimeConverted), "minutes");
 
-		//Log everything to console for debugging purposes.
-		console.log("train name in database: " + newTrain.trainName);
-		console.log("destination in database: " + newTrain.destination);
-		console.log("first train time in database: " + newTrain.firstTrainTime);
-		console.log("train frequency in database: " + newTrain.trainFrequency);
-		console.log("next train in database: " + newTrain.nextTrain);
-		console.log("minutes away in database: " + newTrain.tMinutesTillTrain);
-		console.log("current time in database: " + newTrain.currentTime);
+  // Time apart (remainder)
+  const tRemainder = diffTime % trainFrequency;
 
-		//Confirmation modal that appears when user submits form and train is added successfully to the schedule.
-		$(".add-train-modal").html("<p>" + newTrain.trainName + " was successfully added to the current schedule.");
-		$('#addTrain').modal();
+  // Minute Until Train
+  const tMinutesTillTrain = trainFrequency - tRemainder;
 
-		//Remove the text from the form boxes after user presses the add to schedule button.
-		$("#train-name").val("");
-		$("#destination").val("");
-		$("#first-train-time").val("");
-		$("#frequency").val("");
-	}
+  // Next Train
+  const nextTrain = moment()
+    .add(tMinutesTillTrain, "minutes")
+    .format("hh:mm A");
+
+  //Create local temporary object for holding train data
+  const newTrain = {
+    trainId: moment().format("YYYYMMDDHHmmss").toString(),
+    trainName: trainName,
+    destination: destination,
+    firstTrainTime: firstTrainTime,
+    trainFrequency: trainFrequency,
+    nextTrain: nextTrain,
+    tMinutesTillTrain: tMinutesTillTrain.toString(),
+    currentTime: moment().format("HH:mm A"),
+  };
+
+  //Log everything to console for debugging purposes.
+  console.log("newTrain data: ");
+  console.log(newTrain);
+
+  // Saves the new schedule to the Firebase database.
+  // We put the new value as { [newTrain.trainId]: newTrain } so that we can
+  // get the new schedule by Id from the database (ie: train/schedule/1234556)
+
+  schedule.update({ [newTrain.trainId]: newTrain }).then(function(){
+    // When the saving of the update is successfuly, "then" will run as a side-effect
+    //Confirmation modal that appears when user submits form and train is added successfully to the schedule.
+    $(".add-train-modal").html(
+      "<p>" +
+        newTrain.trainName +
+        " was successfully added to the current schedule."
+    );
+    $("#addTrain").modal();
+  });
 });
 
+// This function resets all errors
+function resetErrors() {
+  $("#not-military-time").empty();
+  $("#missing-field").empty();
+  $("#not-a-number").empty();
+  $("#missing-field").empty();
+}
 
-// At the initial load and subsequent value changes, get a snapshot of the stored data.
-// This function allows you to update the page in real-time when the firebase database changes.
-database.ref().on("child_added", function(childSnapshot, prevChildKey) {
-	console.log(childSnapshot.val());
-	console.log(prevChildKey);
+function deleteSchedule(trainId) {
+  // We get first the trainSchedule via referencing the trainId
+  // Then we call remove() to remove it from the database
+  database.child('schedules/' + trainId).remove();
+}
 
-	//Set variables for form input field values equal to the stored values in firebase.
-	var trainName = childSnapshot.val().trainName;
-	var destination = childSnapshot.val().destination;
-	var firstTrainTime = childSnapshot.val().firstTrainTime;
-	var trainFrequency = childSnapshot.val().trainFrequency;
-	var nextTrain = childSnapshot.val().nextTrain;
-	var tMinutesTillTrain = childSnapshot.val().tMinutesTillTrain;
-	var currentTime = childSnapshot.val().currentTime;
+// database.on('value') will listen to all the database changes from Firebase
+// This refreshes everytime you add or remove a value from the database
+database.on('value', function(childSnapshot, prevChildKey) {
+  $("#schedule-body").empty();
 
-	//Train info
-	console.log(trainName);
-	console.log(destination);
-	console.log(firstTrainTime);
-	console.log(nextTrain);
-	console.log(tMinutesTillTrain);
-	console.log(trainFrequency);
-	console.log(currentTime);
-
-	//Moment JS math caclulations to determine train next arrival time and the number of minutes away from destination.
-	// First Time (pushed back 1 year to make sure it comes before current time)
-    var firstTimeConverted = moment(firstTrainTime, "hh:mm").subtract(1, "years");
-    console.log(firstTimeConverted);
-
-    // Current Time
-    var currentTime = moment();
-    console.log("CURRENT TIME: " + moment(currentTime).format("hh:mm"));
-
-    // Difference between the times
-    var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
-    console.log("DIFFERENCE IN TIME: " + diffTime);
-
-    // Time apart (remainder)
-    var tRemainder = diffTime % trainFrequency;
-    console.log(tRemainder);
-
-    // Minute Until Train
-    var tMinutesTillTrain = trainFrequency - tRemainder;
-    console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
-
-    // Next Train
-    var nextTrain = moment().add(tMinutesTillTrain, "minutes").format("hh:mm A");
-    console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
-
-
-	//Update the HTML (schedule table) to reflect the latest stored values in the firebase database.
-	var tRow = $("<tr>");
-	var trainTd = $("<td>").text(trainName);
-    var destTd = $("<td>").text(destination);
-    var nextTrainTd = $("<td>").text(nextTrain);
-    var trainFrequencyTd = $("<td>").text(trainFrequency);
-    var tMinutesTillTrainTd = $("<td>").text(tMinutesTillTrain);
-
-    // Append the newly created table data to the table row.
-    //Append trash can icon to each row so that user can delete row if needed.
-    tRow.append("<img src='assets/images/if_trash_1608958.svg' alt='trash can' class='trash-can mr-3'>", trainTd, destTd, trainFrequencyTd, nextTrainTd, tMinutesTillTrainTd);
-    // Append the table row to the table body
-    $("#schedule-body").append(tRow);
-});
-
-
-//Click event for trash can icon/button. When user clicks trash can to remove a train from the schedule...
- $("body").on("click", ".trash-can", function(){
-	// Prevent form from submitting
-	event.preventDefault();
-
-	//confirm with the user before he or she decides to actually delete the train data.
-	var confirmDelete = confirm("Deleting a train permanently removes the train from the system. Are you sure you want to delete this train?");
-	//To do: Replace alert with modal... Confirmation modal that appears when user wants to remove train from schedule.
-		//$(".remove-train-modal").html("<p>" + " Deleting a train permanently removes the train from the system. Are you sure you want to delete this train?" + "</p>");
-		//$('#removeTrain').modal();
-	//If user confirms...
-	if (confirmDelete) {
-		//Remove the closest table row.
-		$(this).closest('tr').remove();
-		//To do: Remove train info from db.
-		// getKey = $(this).parent().attr('id');
-		// console.log(getKey);
-		//dataRef.child(key).remove();
-		//database.ref().child(getKey).remove();
-	}
-
-	else {
-		return;
-	}
-});
-
-//One way to initialize all tooltips on a page would be to select them by their data-toggle attribute:
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip()
+  const allTrainData = childSnapshot.val()['schedules'];
+  console.log(allTrainData);
+  Object.keys(allTrainData).forEach(function(trainId) {
+    updateSchedule(allTrainData[trainId]);
+  });
 })
+
+// updateSchedule will add a new row to the table in the HTML
+function updateSchedule(newSchedule) {
+  const trainTd = $("<td>").text(newSchedule.trainName);
+  const destTd = $("<td>").text(newSchedule.destination);
+  const nextTrainTd = $("<td>").text(newSchedule.nextTrain);
+  const trainFrequencyTd = $("<td>").text(newSchedule.trainFrequency);
+  const tMinutesTillTrainTd = $("<td>").text(newSchedule.tMinutesTillTrain);
+
+  // We have to add actions first before appending to the HTML since registering
+  // an action to the DOM is manually done.
+  // If we won't do it, delete button would not be able to trigger this click event
+  const deleteBtn = $("<button>&#x274C;</button>")
+    .addClass("btn btn-sm")
+    .on("click", function(){
+      // To pass the trainId to the deleteSchedule button, we have to update
+      // #remove-train-btn click event
+
+      $("#remove-train-btn").on("click", function() {
+        deleteSchedule(newSchedule.trainId);
+      });
+
+      // Shows removeTrain modal
+      $("#removeTrain").modal();
+    });
+  const deleteTd = $("<td>").append(deleteBtn);
+
+  const newRow = $("<tr>").attr("id", newSchedule.trainId);
+
+  newRow.append(trainTd);
+  newRow.append(destTd);
+  newRow.append(trainFrequencyTd);
+  newRow.append(nextTrainTd);
+  newRow.append(tMinutesTillTrainTd);
+  newRow.append(deleteTd);
+
+  $("#schedule-body").append(newRow);
+}
